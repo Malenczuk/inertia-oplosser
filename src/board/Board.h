@@ -11,7 +11,7 @@ class Board {
 public:
     int height, width;
     int limit;
-    int startY, startX;
+    Position start;
     Field ***board;
 
     Board() = default;
@@ -21,6 +21,11 @@ public:
     Field* get(Position position);
 
     void print();
+
+private:
+    void generateAllEdges();
+
+    void generateEdges(Field* s);
 };
 
 #endif //DIAMONDSANDMINES_BOARD_H

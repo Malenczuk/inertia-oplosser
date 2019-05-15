@@ -22,31 +22,15 @@ std::istream &operator>>(std::istream &str, Board &data) {
         std::getline(str, line);
         for (int j = 0; j < tmp.width; ++j) {
             if (line[j] == FieldType::VEHICLE) {
-                tmp.startY = i;
-                tmp.startX = j;
+                tmp.start = Position{i, j};
                 tmp.board[i][j] = new Field(Position{i, j}, FieldType::CAVITY);
             } else {
                 tmp.board[i][j] = new Field(Position{i, j}, (FieldType) line[j]);
             }
         }
     }
-
-    for (int i = 0; i < tmp.height; ++i) {
-        for (int j = 0; j < tmp.width; ++j) {
-            if (tmp.board[i][j]->type != FieldType::STONE && tmp.board[i][j]->type != FieldType::MINE) {
-                for (Movement::Type m: Movement::All) {
-                    Field* field = tmp.board[i][j];
-                    Field* next;
-                    do {
-                        next = tmp.get(Movement::move(m, field->position));
-                        if((next->type == FieldType::EMPTY || next->type == FieldType::GEM)) field = next;
-                        else if (next->type == FieldType::STONE && field != tmp.board[i][j]) tmp.board[i][j]->addMove(Move(m, field));
-                        else if (next->type == FieldType::CAVITY) tmp.board[i][j]->addMove(Move(m, next));
-                    } while ((next->type == FieldType::EMPTY || next->type == FieldType::GEM));
-                }
-            }
-        }
-    }
+//    tmp.generateAllEdges();
+    tmp.generateEdges(tmp.get(tmp.start));
 
     data = tmp;
     return str;
@@ -56,9 +40,11 @@ void Board::print() {
     std::cout << "height: " << this->height << std::endl;
     std::cout << "width: " << this->width << std::endl;
     std::cout << "limit: " << this->limit << std::endl;
+    std::cout << "vehicle: {" << start.y << " " << start.x << "}" << std::endl;
     for (int i = 0; i < this->height; ++i) {
         for (int j = 0; j < this->width; ++j) {
-            std::cout << (char) this->board[i][j]->type;
+            if (start.y == i && start.x == j) std::cout << (char) FieldType::VEHICLE;
+            else std::cout << (char) this->board[i][j]->type;
         }
         std::cout << std::endl;
     }
@@ -71,4 +57,42 @@ void Board::print() {
 
 Field* Board::get(Position position) {
     return this->board[position.y][position.x];
+}
+
+void Board::generateAllEdges() {
+    for (int i = 0; i < this->height; ++i) {
+        for (int j = 0; j < this->width; ++j) {
+            if (this->board[i][j]->type != FieldType::STONE && this->board[i][j]->type != FieldType::MINE) {
+                for (Movement::Type m: Movement::All) {
+                    Field* field = this->board[i][j];
+                    Field* next;
+                    do {
+                        next = this->get(Movement::move(m, field->position));
+                        if((next->type == FieldType::EMPTY || next->type == FieldType::GEM)) field = next;
+                        else if (next->type == FieldType::STONE && field != this->board[i][j]) this->board[i][j]->addMove(Move(m, field));
+                        else if (next->type == FieldType::CAVITY) this->board[i][j]->addMove(Move(m, next));
+                    } while ((next->type == FieldType::EMPTY || next->type == FieldType::GEM));
+                }
+            }
+        }
+    }
+}
+
+void Board::generateEdges(Field* s) {
+    for (Movement::Type m: Movement::All) {
+        Field* field = s;
+        Field* next;
+        do {
+            next = this->get(Movement::move(m, field->position));
+            if((next->type == FieldType::EMPTY || next->type == FieldType::GEM)) field = next;
+            else if (next->type == FieldType::STONE && field != s) {
+                s->addMove(Move(m, field));
+                if(field->moves.empty()) this->generateEdges(field);
+            }
+            else if (next->type == FieldType::CAVITY) {
+                s->addMove(Move(m, next));
+                if(next->moves.empty()) this->generateEdges(next);
+            }
+        } while ((next->type == FieldType::EMPTY || next->type == FieldType::GEM));
+    }
 }
