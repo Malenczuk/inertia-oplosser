@@ -28,10 +28,10 @@ class Field;
 class Move {
 public:
     Movement::Type movement;
-    Field *dest;
+    Field *src;
+    Field *dst;
 
-    Move(Movement::Type movement, Field *dest) : movement(movement), dest(dest) {}
-
+    Move(Movement::Type movement, Field *src, Field *dst) : movement(movement), src(src), dst(dst) {}
 
 };
 

@@ -19,8 +19,9 @@ public:
     Position position;
     FieldType type;
     std::vector<Move> moves;
+    std::vector<Move> gemMoves;
 
-    Field(Position position, FieldType type): position(position), type(type) {};
+    Field(Position position, FieldType type) : position(position), type(type) {};
 
     void addMove(Move move);
 
